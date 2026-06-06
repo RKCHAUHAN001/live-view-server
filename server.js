@@ -18,6 +18,9 @@ io.on('connection', (socket) => {
     socket.on('join-session', (sessionId) => {
         socket.join(sessionId);
         console.log(`[SERVER] Guest joined session: ${sessionId}`);
+        
+        // Notify both users in the room that the peer-to-peer link is established
+        io.to(sessionId).emit('peer-connected');
     });
 
     // 1. Text changes
@@ -50,7 +53,7 @@ io.on('connection', (socket) => {
     });
 
     
-    // 6. Stop Session / Disconnect from session room
+    // 2. Disconnect from session room
     socket.on('leave-session', (data) => {
         socket.to(data.sessionId).emit('session-ended');
         socket.leave(data.sessionId);
