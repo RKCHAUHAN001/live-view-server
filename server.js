@@ -1,38 +1,56 @@
+// server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-
-// Enable CORS so the VS Code extension can connect
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
+    console.log(`[SERVER] Connected: ${socket.id}`);
 
-    // Let user join a specific session room
-    socket.on('join-room', (roomId) => {
-        socket.join(roomId);
-        console.log(`User ${socket.id} joined room ${roomId}`);
+    socket.on('create-session', (sessionId) => {
+        socket.join(sessionId);
+        console.log(`[SERVER] Session created: ${sessionId}`);
     });
 
-    // Broadcast the text update to everyone else in the same room
+    socket.on('join-session', (sessionId) => {
+        socket.join(sessionId);
+        console.log(`[SERVER] Guest joined session: ${sessionId}`);
+    });
+
+    // 1. Text changes
     socket.on('text-update', (data) => {
-        socket.to(data.roomId).emit('text-update', data);
+        socket.to(data.sessionId).emit('text-receive', { content: data.content });
+    });
+
+    // 2. Cursor Coordinates
+    socket.on('cursor-send', (data) => {
+        socket.to(data.sessionId).emit('cursor-receive', data);
+    });
+
+    // 3. Permissions changes
+    socket.on('permission-send', (data) => {
+        socket.to(data.sessionId).emit('permission-receive', data);
+    });
+
+    // 4. File lists
+    socket.on('file-list-send', (data) => {
+        socket.to(data.sessionId).emit('file-list-receive', data.files);
+    });
+
+    // 5. File read requests
+    socket.on('request-file-send', (data) => {
+        socket.to(data.sessionId).emit('request-file-receive', data.filePath);
     });
 
     socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
+        console.log(`[SERVER] Disconnected: ${socket.id}`);
     });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Live View server running on port ${PORT}`);
+    console.log(`[SERVER] Running on port ${PORT}`);
 });
