@@ -25,7 +25,8 @@ io.on('connection', (socket) => {
 
     // 1. Text changes
     socket.on('text-update', (data) => {
-        socket.to(data.sessionId).emit('text-receive', { content: data.content });
+        // Relays the entire payload (filePath + content) to everyone except sender
+        socket.to(data.sessionId).emit('text-receive', data);
     });
 
     // 2. Cursor Coordinates
