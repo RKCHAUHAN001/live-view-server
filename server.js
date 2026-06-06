@@ -48,6 +48,14 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(`[SERVER] Disconnected: ${socket.id}`);
     });
+
+    
+    // 6. Stop Session / Disconnect from session room
+    socket.on('leave-session', (data) => {
+        socket.to(data.sessionId).emit('session-ended');
+        socket.leave(data.sessionId);
+        console.log(`[SERVER] Client left session: ${data.sessionId}`);
+    });
 });
 
 const PORT = process.env.PORT || 3000;
