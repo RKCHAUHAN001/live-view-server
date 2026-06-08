@@ -54,11 +54,20 @@ io.on('connection', (socket) => {
     });
 
     
-    // 2. Disconnect from session room
+    // 6. Disconnect from session room
     socket.on('leave-session', (data) => {
         socket.to(data.sessionId).emit('session-ended');
         socket.leave(data.sessionId);
         console.log(`[SERVER] Client left session: ${data.sessionId}`);
+    });
+
+        // 7. Chat Message Relay
+    socket.on('chat-message-send', (data) => {
+        // data = { sessionId, sender, text }
+        io.to(data.sessionId).emit('chat-message-receive', {
+            sender: data.sender,
+            text: data.text
+        });
     });
 });
 
